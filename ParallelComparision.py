@@ -1,3 +1,17 @@
+"""
+Sequential and Parallel Image Processing Comparison
+Date: 19 March 2026
+
+Generative AI was used only to assist with improving docstrings, comments,
+and logbook-style documentation. The underlying code logic and implementation
+remained the student’s own work.
+
+Brief Description
+-----------------
+Processes a selected image folder using both sequential and parallel methods,
+then compares execution times and displays a timing plot.
+"""
+
 import os
 import time
 import cv2
@@ -5,14 +19,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import concurrent.futures
 
+
 # =========================================================
 # SETTINGS
 # =========================================================
+
 ph13 = r"C:\Users\aprko\Desktop\Group_Project\PH 13 Images"
 ph12 = r"C:\Users\aprko\Desktop\Group_Project\PH 12 Images"
 
 # Choose which folder to process
-folder = ph13   # change to ph12 if needed
+folder = ph13   # Change to ph12 if needed
 
 start_index = 18
 end_index = 32
@@ -27,22 +43,13 @@ par_folder = os.path.join(folder, "Parallel_Output")
 os.makedirs(seq_folder, exist_ok=True)
 os.makedirs(par_folder, exist_ok=True)
 
+
 # =========================================================
 # IMAGE PROCESSING FUNCTION
 # =========================================================
-def process_image(i, input_folder, output_folder):
-    """
-    Process one image:
-    - read image
-    - convert to HSV
-    - create blue mask
-    - remove noise
-    - apply mask
-    - save result
 
-    Returns:
-        (filename, success, message)
-    """
+def process_image(i, input_folder, output_folder):
+    """Process a single image and save the masked output."""
     filename = f"APC_{i:04d}.jpg"
     path = os.path.join(input_folder, filename)
 
@@ -51,34 +58,34 @@ def process_image(i, input_folder, output_folder):
     if img is None:
         return filename, False, "not found"
 
-    # Convert to HSV
+    # Convert to HSV colour space
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    # Create blue mask
+    # Create blue-region mask
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
-    # Remove noise
+    # Apply basic noise reduction
     kernel = np.ones((3, 3), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.GaussianBlur(mask, (5, 5), 0)
 
-    # Apply mask
+    # Apply mask to original image
     result = cv2.bitwise_and(img, img, mask=mask)
 
-    # Save output
+    # Save processed output
     output_name = f"APC_{i:04d}_NoiseReduced.jpg"
     output_path = os.path.join(output_folder, output_name)
     cv2.imwrite(output_path, result)
 
     return filename, True, output_name
 
+
 # =========================================================
 # SEQUENTIAL VERSION
 # =========================================================
+
 def run_sequential():
-    """
-    Run image processing one-by-one and time it.
-    """
+    """Run image processing sequentially and measure execution time."""
     t0 = time.perf_counter()
     results = []
 
@@ -89,13 +96,13 @@ def run_sequential():
     elapsed = t1 - t0
     return results, elapsed
 
+
 # =========================================================
 # PARALLEL VERSION
 # =========================================================
+
 def run_parallel():
-    """
-    Run image processing in parallel using ThreadPoolExecutor and time it.
-    """
+    """Run image processing in parallel and measure execution time."""
     t0 = time.perf_counter()
     results = []
 
@@ -112,9 +119,11 @@ def run_parallel():
     elapsed = t1 - t0
     return results, elapsed
 
+
 # =========================================================
 # MAIN
 # =========================================================
+
 if __name__ == "__main__":
     print(f"Processing folder: {folder}")
 
@@ -124,7 +133,7 @@ if __name__ == "__main__":
     print("\nRunning parallel version...")
     par_results, par_time = run_parallel()
 
-    # Sort results so output is tidy
+    # Sort results so printed output is ordered by filename
     seq_results.sort(key=lambda x: x[0])
     par_results.sort(key=lambda x: x[0])
 
@@ -145,6 +154,7 @@ if __name__ == "__main__":
     # =====================================================
     # TIMING COMPARISON
     # =====================================================
+
     print("\n================ TIMING COMPARISON ================")
     print(f"Sequential time: {seq_time:.6f} seconds")
     print(f"Parallel time:   {par_time:.6f} seconds")
@@ -164,8 +174,9 @@ if __name__ == "__main__":
         print("Could not calculate percentage quicker")
 
     # =====================================================
-    # PROFESSIONAL TIMING PLOT
+    # TIMING PLOT
     # =====================================================
+
     labels = ["Sequential", "Parallel"]
     times = [seq_time, par_time]
 
@@ -175,7 +186,7 @@ if __name__ == "__main__":
     plt.ylabel("Execution Time (seconds)", fontsize=12)
     plt.title("Performance Comparison: Sequential vs Parallel Image Processing", fontsize=14)
 
-    # Exact values on top of bars
+    # Add exact timing values above bars
     for bar in bars:
         height = bar.get_height()
         plt.text(
@@ -187,10 +198,11 @@ if __name__ == "__main__":
             fontsize=11
         )
 
-    # Annotation box
+    # Add timing summary box
     textstr = f"Speedup: {speedup:.2f}x\nImprovement: {percent_quicker:.1f}%"
     plt.gca().text(
-        0.95, 0.95,
+        0.95,
+        0.95,
         textstr,
         transform=plt.gca().transAxes,
         fontsize=11,
