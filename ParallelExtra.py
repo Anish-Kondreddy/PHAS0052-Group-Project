@@ -1,3 +1,17 @@
+"""
+Sequential vs Parallel Image Processing Benchmark
+Date: 19 March 2026
+
+Generative AI was used only to assist with improving docstrings, comments,
+and logbook-style documentation. The underlying code logic and implementation
+remained the student’s own work.
+
+Brief Description
+-----------------
+Benchmarks sequential and parallel image processing performance for a set of
+images, then saves runtime results and summary figures.
+"""
+
 import os
 import csv
 import time
@@ -6,16 +20,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import concurrent.futures
 
+
 # =========================================================
 # SETTINGS
 # =========================================================
+
 folder = r"C:\Users\aprko\Desktop\Group_Project\PH 12 Images"
 
 start_index = 18
 end_index = 32
 n_runs = 10
 max_workers = 15
-save_outputs = False   # False for fair benchmarking, True if you also want saved images
+save_outputs = False   # False for fair benchmarking, True to also save processed images
 
 # HSV thresholds for blue region detection
 lower_blue = np.array([95, 50, 50])
@@ -38,21 +54,23 @@ summary_table_path = os.path.join(folder, "runtime_summary_table.png")
 bar_chart_path = os.path.join(folder, "runtime_comparison_with_se.png")
 line_plot_path = os.path.join(folder, "runtime_per_run.png")
 
+
 # =========================================================
 # IMAGE PROCESSING FUNCTION
 # =========================================================
+
 def process_image(i, output_folder=None, save_output=False):
     """
-    Process one image by isolating blue regions and reducing noise.
+    Process a single image by isolating blue regions and reducing noise.
 
     Parameters
     ----------
     i : int
         Image index.
-    output_folder : str or None
-        Folder for saving processed image.
-    save_output : bool
-        Whether to save processed output.
+    output_folder : str or None, optional
+        Folder for saving the processed image.
+    save_output : bool, optional
+        Whether to save the processed output image.
 
     Returns
     -------
@@ -66,21 +84,21 @@ def process_image(i, output_folder=None, save_output=False):
     if img is None:
         return filename, False, "not found"
 
-    # Convert to HSV
+    # Convert image to HSV colour space
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # Threshold blue region
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
-    # Noise reduction
+    # Reduce noise in the mask
     kernel = np.ones((3, 3), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.GaussianBlur(mask, (5, 5), 0)
 
-    # Apply mask
+    # Apply mask to original image
     result = cv2.bitwise_and(img, img, mask=mask)
 
-    # Save only if requested
+    # Save output image if requested
     if save_output and output_folder is not None:
         output_name = f"APC_{i:04d}_NoiseReduced.jpg"
         output_path = os.path.join(output_folder, output_name)
@@ -89,9 +107,11 @@ def process_image(i, output_folder=None, save_output=False):
 
     return filename, True, "processed"
 
+
 # =========================================================
 # SEQUENTIAL VERSION
 # =========================================================
+
 def run_sequential(save_output=False):
     """
     Run image processing sequentially and return elapsed time.
@@ -104,9 +124,11 @@ def run_sequential(save_output=False):
     t1 = time.perf_counter()
     return t1 - t0
 
+
 # =========================================================
 # PARALLEL VERSION
 # =========================================================
+
 def run_parallel(save_output=False):
     """
     Run image processing in parallel and return elapsed time.
@@ -124,9 +146,11 @@ def run_parallel(save_output=False):
     t1 = time.perf_counter()
     return t1 - t0
 
+
 # =========================================================
-# MAIN
+# MAIN EXECUTION
 # =========================================================
+
 if __name__ == "__main__":
     sequential_times = []
     parallel_times = []
@@ -153,6 +177,7 @@ if __name__ == "__main__":
     # =====================================================
     # CALCULATIONS
     # =====================================================
+
     seq_mean = np.mean(sequential_times)
     seq_std = np.std(sequential_times, ddof=1) if len(sequential_times) > 1 else 0.0
     seq_se = seq_std / np.sqrt(len(sequential_times)) if len(sequential_times) > 1 else 0.0
@@ -179,11 +204,13 @@ if __name__ == "__main__":
         print(f"Parallel was slower by {-percent_improvement:.2f}%")
 
     # =====================================================
-    # SAVE TO CSV
+    # SAVE TIMING RESULTS TO CSV
     # =====================================================
+
     with open(csv_path, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["Run", "Sequential Time (s)", "Parallel Time (s)"])
+
         for i in range(n_runs):
             writer.writerow([i + 1, sequential_times[i], parallel_times[i]])
 
@@ -204,6 +231,7 @@ if __name__ == "__main__":
     # =====================================================
     # SUMMARY TABLE FIGURE
     # =====================================================
+
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.axis("off")
 
@@ -214,7 +242,7 @@ if __name__ == "__main__":
 
     table_data = [
         ["Sequential", f"{seq_mean:.6f}", f"{seq_std:.6f}", f"{seq_se:.6f}"],
-        ["Parallel",   f"{par_mean:.6f}", f"{par_std:.6f}", f"{par_se:.6f}"]
+        ["Parallel", f"{par_mean:.6f}", f"{par_std:.6f}", f"{par_se:.6f}"]
     ]
 
     table = ax.table(
@@ -235,8 +263,9 @@ if __name__ == "__main__":
     plt.close()
 
     # =====================================================
-    # ERROR BAR PLOT USING STANDARD ERROR
+    # BAR CHART WITH STANDARD ERROR BARS
     # =====================================================
+
     labels = ["Sequential", "Parallel"]
     means = [seq_mean, par_mean]
     ses = [seq_se, par_se]
@@ -285,6 +314,7 @@ if __name__ == "__main__":
     # =====================================================
     # PER-RUN LINE PLOT
     # =====================================================
+
     run_numbers = np.arange(1, n_runs + 1)
 
     fig, ax = plt.subplots(figsize=(10, 6))
